@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sommelier Digital - Recomendador de Cocktails</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(20, 30, 48, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question {
+            margin-bottom: 30px;
+        }
+
+        .question label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #00d4ff;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .option-btn.selected {
+            background: #00d4ff;
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            color: #fff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid #fff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            transition: width 0.3s ease;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-item {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .result-item h3 {
+            color: #00d4ff;
+            margin-bottom: 8px;
+        }
+
+        .result-item p {
+            color: #aaa;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .confirmation {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .confirmation h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+
+        .confirmation p {
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍹 Sommelier Digital</h1>
+            <p>Deixa-nos ajudar a encontrar o cocktail perfeito</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- FORMULÁRIO -->
+        <form id="quizForm">
+            <!-- PERGUNTA 1: SABOR -->
+            <div class="form-section active" data-step="1">
+                <div class="question">
+                    <label>1️⃣ Que tipo de sabor preferes?</label>
+                    <div class="options">
+                        <button type="button" class="option-btn" data-answer="doce" onclick="selectOption(this, 'flavor', 'doce')">🍯 Doce</button>
+                        <button type="button" class="option-btn" data-answer="amargo" onclick="selectOption(this, 'flavor', 'amargo')">🥃 Amargo</button>
+                        <button type="button" class="option-btn" data-answer="frutal" onclick="selectOption(this, 'flavor', 'frutal')">🍓 Frutal</button>
+                        <button type="button" class="option-btn" data-answer="herbal" onclick="selectOption(this, 'flavor', 'herbal')">🌿 Herbal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERGUNTA 2: INTENSIDADE -->
+            <div class="form-section" data-step="2">
+                <div class="question">
+                    <label>2️⃣ Que intensidade preferes?</label>
+                    <div class="options">
+                        <button type="button" class="option-btn" data-answer="leve" onclick="selectOption(this, 'intensity', 'leve')">☁️ Leve</button>
+                        <button type="button" class="option-btn" data-answer="medio" onclick="selectOption(this, 'intensity', 'medio')">⚡ Médio</button>
+                        <button type="button" class="option-btn" data-answer="forte" onclick="selectOption(this, 'intensity', 'forte')">🔥 Forte</button>
+                        <button type="button" class="option-btn" data-answer="muito-forte" onclick="selectOption(this, 'intensity', 'muito-forte')">💥 Muito Forte</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERGUNTA 3: ALERGIAS -->
+            <div class="form-section" data-step="3">
+                <div class="question">
+                    <label>3️⃣ Tens alguma alergia?</label>
+                    <div class="options">
+                        <button type="button" class="option-btn" data-answer="nenhuma" onclick="selectOption(this, 'allergy', 'nenhuma')">✅ Nenhuma</button>
+                        <button type="button" class="option-btn" data-answer="citricas" onclick="selectOption(this, 'allergy', 'citricas')">🍋 Frutas Cítricas</button>
+                        <button type="button" class="option-btn" data-answer="lactose" onclick="selectOption(this, 'allergy', 'lactose')">🥛 Lactose</button>
+                        <button type="button" class="option-btn" data-answer="nozes" onclick="selectOption(this, 'allergy', 'nozes')">🥜 Nozes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERGUNTA 4: ÁLCOOL -->
+            <div class="form-section" data-step="4">
+                <div class="question">
+                    <label>4️⃣ Com ou sem álcool?</label>
+                    <div class="options">
+                        <button type="button" class="option-btn" data-answer="com" onclick="selectOption(this, 'alcohol', 'com')">🍸 Com Álcool</button>
+                        <button type="button" class="option-btn" data-answer="sem" onclick="selectOption(this, 'alcohol', 'sem')">🚫 Sem Álcool</button>
+                        <button type="button" class="option-btn" data-answer="low" onclick="selectOption(this, 'alcohol', 'low')">📊 Baixo Álcool</button>
+                        <button type="button" class="option-btn" data-answer="surprise" onclick="selectOption(this, 'alcohol', 'surprise')">🎲 Surpresa!</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERGUNTA 5: ORÇAMENTO -->
+            <div class="form-section" data-step="5">
+                <div class="question">
+                    <label>5️⃣ Qual é o teu orçamento?</label>
+                    <div class="options">
+                        <button type="button" class="option-btn" data-answer="8-12" onclick="selectOption(this, 'budget', '8-12')">💰 €8-12</button>
+                        <button type="button" class="option-btn" data-answer="12-15" onclick="selectOption(this, 'budget', '12-15')">💎 €12-15</button>
+                        <button type="button" class="option-btn" data-answer="15-20" onclick="selectOption(this, 'budget', '15-20')">👑 €15-20</button>
+                        <button type="button" class="option-btn" data-answer="20-plus" onclick="selectOption(this, 'budget', '20-plus')">💸 €20+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTADOS -->
+            <div class="results" id="results">
+                <div class="question">
+                    <label>🎉 Recomendações para ti:</label>
+                    <div id="recommendationsList"></div>
+                </div>
+            </div>
+
+            <!-- BOTÕES DE NAVEGAÇÃO -->
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" id="btnBack" onclick="previousStep()" style="display: none;">← Voltar</button>
+                <button type="button" class="btn btn-primary" id="btnNext" onclick="nextStep()" disabled>Próximo →</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        let answers = {};
+
+        const recommendations = {
+            'doce-leve-nenhuma-com-8-12': ['Mojito', 'Daiquiri Clássico'],
+            'doce-leve-nenhuma-com-12-15': ['Mojito Premium', 'Daiquiri Reserva'],
+            'doce-leve-nenhuma-sem-8-12': ['Virgin Mojito', 'Mocktail Doce'],
+            'doce-medio-nenhuma-com-8-12': ['Cosmopolitan', 'Sex on the Beach'],
+            'doce-forte-nenhuma-com-15-20': ['Long Island Iced Tea', 'Tropical Storm'],
+            'amargo-forte-nenhuma-com-12-15': ['Negroni', 'Sazerac'],
+            'frutal-leve-nenhuma-sem-8-12': ['Smoothie Cocktail', 'Virgin Colada'],
+            'herbal-medio-nenhuma-com-12-15': ['Sazerac', 'Hendricks Tônica'],
+        };
+
+        function selectOption(button, category, value) {
+            const parent = button.parentElement;
+            parent.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            answers[category] = value;
+            document.getElementById('btnNext').disabled = false;
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelector(`[data-step="${step}"]`).classList.add('active');
+
+            const backBtn = document.getElementById('btnBack');
+            const nextBtn = document.getElementById('btnNext');
+
+            if (step === 1) {
+                backBtn.style.display = 'none';
+            } else {
+                backBtn.style.display = 'flex';
+            }
+
+            if (step === totalSteps) {
+                nextBtn.textContent = 'Ver Recomendações →';
+            } else {
+                nextBtn.textContent = 'Próximo →';
+            }
+
+            updateProgress();
+        }
+
+        function nextStep() {
+            if (currentStep === totalSteps) {
+                showRecommendations();
+                return;
+            }
+
+            if (currentStep < totalSteps) {
+                currentStep++;
+                document.getElementById('btnNext').disabled = true;
+                showStep(currentStep);
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                document.getElementById('btnNext').disabled = true;
+                showStep(currentStep);
+            }
+        }
+
+        function showRecommendations() {
+            const key = Object.values(answers).join('-');
+            const closest = Object.keys(recommendations).find(k => k.includes(answers.flavor) && k.includes(answers.intensity));
+            const cocktails = closest ? recommendations[closest] : ['Mojito', 'Cosmopolitan', 'Margarita'];
+
+            let html = '';
+            cocktails.forEach(cocktail => {
+                html += `<div class="result-item" onclick="selectCocktail('${cocktail}')"><h3>${cocktail}</h3><p>Clique para confirmar</p></div>`;
+            });
+
+            document.getElementById('recommendationsList').innerHTML = html;
+            document.getElementById('results').classList.add('active');
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('btnNext').style.display = 'none';
+            document.getElementById('btnBack').style.display = 'flex';
+            document.getElementById('btnBack').textContent = '← Voltar';
+        }
+
+        function selectCocktail(cocktail) {
+            const confirmation = `
+                <div class="confirmation">
+                    <h2>Perfeito! 🎉</h2>
+                    <h3>${cocktail}</h3>
+                    <p>Pedido confirmado! Chama o bartender.</p>
+                    <button class="btn btn-primary" onclick="reset()" style="margin-top: 20px;">Fazer Novo Pedido</button>
+                </div>
+            `;
+            document.getElementById('recommendationsList').innerHTML = confirmation;
+        }
+
+        function reset() {
+            currentStep = 1;
+            answers = {};
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('btnNext').style.display = 'flex';
+            document.getElementById('btnNext').disabled = true;
+            document.getElementById('btnNext').textContent = 'Próximo →';
+            showStep(1);
+        }
+
+        // Inicializar
+        showStep(1);
+    </script>
+</body>
+</html>
