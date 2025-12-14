@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sommelier Digital - Recomendador de Cocktails</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(20, 30, 48, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question {
+            margin-bottom: 30px;
+        }
+
+        .question label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #00d4ff;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .options.single {
+            grid-template-columns: 1fr;
+        }
+
+        .option {
+            background: rgba(100, 150, 200, 0.1);
+            border: 2px solid rgba(100, 150, 200, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .option:hover {
+            background: rgba(100, 150, 200, 0.2);
+            border-color: rgba(100, 150, 200, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .option.selected {
+            background: linear-gradient(135deg, #7c3aed, #00d4ff);
+            border-color: #00d4ff;
+            color: #fff;
+        }
+
+        .recommendations {
+            display: none;
+        }
+
+        .recommendations.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .recommendations h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .cocktail-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(0, 212, 255, 0.1));
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cocktail-card:hover {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(0, 212, 255, 0.2));
+            border-color: #00d4ff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .cocktail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cocktail-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .cocktail-price {
+            font-size: 18px;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .cocktail-desc {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #7c3aed, #00d4ff);
+            color: #fff;
+        }
+
+        .btn-next:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-back {
+            background: rgba(100, 150, 200, 0.1);
+            color: #aaa;
+            border: 2px solid rgba(100, 150, 200, 0.3);
+        }
+
+        .btn-back:hover {
+            background: rgba(100, 150, 200, 0.2);
+            color: #fff;
+        }
+
+        .btn-order {
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            color: #000;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-order:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .progress {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(100, 150, 200, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: #00d4ff;
+            width: 30px;
+            border-radius: 5px;
+        }
+
+        .error {
+            background: rgba(255, 100, 100, 0.1);
+            color: #ff6464;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .success {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .success h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+
+        .success p {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .discord-notice {
+            background: rgba(88, 101, 242, 0.1);
+            border: 2px solid rgba(88, 101, 242, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍹 Sommelier Digital</h1>
+            <p>Deixa-nos ajudar a encontrar o cocktail perfeito</p>
+        </div>
+
+        <div class="progress">
+            <div class="progress-dot active" id="dot-1"></div>
+            <div class="progress-dot" id="dot-2"></div>
+            <div class="progress-dot" id="dot-3"></div>
+            <div class="progress-dot" id="dot-4"></div>
+            <div class="progress-dot" id="dot-5"></div>
+        </div>
+
+        <div class="error" id="error-msg"></div>
+
+        <!-- Pergunta 1 -->
+        <div class="form-section active" id="section-1">
+            <div class="question">
+                <label>Que tipo de sabor preferes?</label>
+                <div class="options">
+                    <div class="option" onclick="selectOption('flavor', 'doce')">🍯 Doce</div>
+                    <div class="option" onclick="selectOption('flavor', 'amargo')">🥃 Amargo</div>
+                    <div class="option" onclick="selectOption('flavor', 'frutal')">🍓 Frutal</div>
+                    <div class="option" onclick="selectOption('flavor', 'herbal')">🌿 Herbal</div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-next" onclick="nextQuestion(1)" id="btn-next-1" disabled>Próximo</button>
+            </div>
+        </div>
+
+        <!-- Pergunta 2 -->
+        <div class="form-section" id="section-2">
+            <div class="question">
+                <label>Qual é a intensidade que preferes?</label>
+                <div class="options">
+                    <div class="option" onclick="selectOption('intensity', 'leve')">🌤️ Leve</div>
+                    <div class="option" onclick="selectOption('intensity', 'medio')">⛅ Médio</div>
+                    <div class="option" onclick="selectOption('intensity', 'forte')">⚡ Forte</div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-back" onclick="prevQuestion(2)">Voltar</button>
+                <button class="btn-next" onclick="nextQuestion(2)" id="btn-next-2" disabled>Próximo</button>
+            </div>
+        </div>
+
+        <!-- Pergunta 3 -->
+        <div class="form-section" id="section-3">
+            <div class="question">
+                <label>Tens alguma alergia ou intolerância?</label>
+                <div class="options single">
+                    <div class="option" onclick="selectOption('allergy', 'nenhuma')">✅ Nenhuma</div>
+                    <div class="option" onclick="selectOption('allergy', 'frutas')">🚫 Frutas cítricas</div>
+                    <div class="option" onclick="selectOption('allergy', 'lactose')">🚫 Lactose</div>
+                    <div class="option" onclick="selectOption('allergy', 'nozes')">🚫 Nozes</div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-back" onclick="prevQuestion(3)">Voltar</button>
+                <button class="btn-next" onclick="nextQuestion(3)" id="btn-next-3" disabled>Próximo</button>
+            </div>
+        </div>
+
+        <!-- Pergunta 4 -->
+        <div class="form-section" id="section-4">
+            <div class="question">
+                <label>Preferes bebidas com álcool?</label>
+                <div class="options">
+                    <div class="option" onclick="selectOption('alcohol', 'sim')">🍸 Com álcool</div>
+                    <div class="option" onclick="selectOption('alcohol', 'nao')">🧃 Sem álcool</div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-back" onclick="prevQuestion(4)">Voltar</button>
+                <button class="btn-next" onclick="nextQuestion(4)" id="btn-next-4" disabled>Próximo</button>
+            </div>
+        </div>
+
+        <!-- Pergunta 5 -->
+        <div class="form-section" id="section-5">
+            <div class="question">
+                <label>Qual é o teu orçamento?</label>
+                <div class="options">
+                    <div class="option" onclick="selectOption('budget', 'economico')">💰 €8-12</div>
+                    <div class="option" onclick="selectOption('budget', 'medio')">💵 €12-15</div>
+                    <div class="option" onclick="selectOption('budget', 'premium')">💎 €15+</div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-back" onclick="prevQuestion(5)">Voltar</button>
+                <button class="btn-next" onclick="generateRecommendations()" id="btn-rec">Ver Recomendações</button>
+            </div>
+        </div>
+
+        <!-- Recomendações -->
+        <div class="recommendations" id="recommendations">
+            <h2>✨ Os nossos favoritos para ti</h2>
+            <div id="cocktail-list"></div>
+            <div class="discord-notice">
+                💡 Dica: Partilha o teu cocktail favorito! O staff vai preparar com ❤️
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formData = {
+            flavor: null,
+            intensity: null,
+            allergy: null,
+            alcohol: null,
+            budget: null,
+            selectedCocktail: null
+        };
+
+        const cocktailDatabase = {
+            'doce-leve-nenhuma-sim-economico': [
+                { name: 'Daiquiri', price: '€10', desc: 'Rum branco, sumo de limão, xarope' },
+                { name: 'Mojito', price: '€12', desc: 'Rum branco, menta fresca, açúcar, lima' },
+                { name: 'Margarita Doce', price: '€11', desc: 'Tequila, Triple Sec, sumo de limão' }
+            ],
+            'doce-leve-nenhuma-sim-medio': [
+                { name: 'Piña Colada', price: '€13', desc: 'Rum branco, creme de coco, sumo de ananás' },
+                { name: 'Mai Tai', price: '€14', desc: 'Rum, licor de amêndoa, sumo de laranja' }
+            ],
+            'doce-leve-nenhuma-sim-premium': [
+                { name: 'Sazerac', price: '€16', desc: 'Whisky americano, absinto, angostura' },
+                { name: 'Martini Clássico', price: '€18', desc: 'Gin ou vodka premium, vermouth seco' }
+            ],
+            'amargo-forte-nenhuma-sim-economico': [
+                { name: 'Negroni', price: '€12', desc: 'Gin, Campari, vermouth rosso' },
+                { name: 'Margarita Clássica', price: '€11', desc: 'Tequila, Triple Sec, sumo de limão' }
+            ],
+            'amargo-forte-nenhuma-sim-medio': [
+                { name: 'Old Fashioned', price: '€14', desc: 'Whisky, açúcar, angostura, cereja' },
+                { name: 'Sazerac', price: '€16', desc: 'Whisky, absinto, angostura' }
+            ],
+            'amargo-forte-nenhuma-sim-premium': [
+                { name: 'Vieux Carré', price: '€20', desc: 'Whisky, conhaque, Bénédictine, especiarias' },
+                { name: 'Death & Co', price: '€22', desc: 'Whisky premium, bitters artesanal' }
+            ],
+            'frutal-medio-nenhuma-sim-economico': [
+                { name: 'Pisco Sour', price: '€10', desc: 'Pisco, sumo de limão, clara de ovo, angostura' },
+                { name: 'Margarita Frutal', price: '€12', desc: 'Tequila, licor de morango, sumo de limão' }
+            ],
+            'frutal-leve-nenhuma-nao-economico': [
+                { name: 'Virgin Mojito', price: '€8', desc: 'Menta fresca, sumo de lima, xarope, água tónica' },
+                { name: 'Mocktail Frutal', price: '€9', desc: 'Sumos frescos, xarope, gelo, hortelã' }
+            ],
+            'herbal-medio-nenhuma-sim-economico': [
+                { name: 'Sazerac', price: '€12', desc: 'Whisky, ervas aromáticas, angostura' },
+                { name: 'Boulevardier', price: '€13', desc: 'Whisky, Campari, vermouth doce' }
+            ]
+        };
+
+        function selectOption(field, value) {
+            formData[field] = value;
+
+            // Visual feedback
+            const section = document.querySelector(`[onclick*="${field}"]`).closest('.question');
+            section.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            event.target.classList.add('selected');
+
+            // Enable next button
+            const currentSection = Object.keys(formData).findIndex(k => formData[k] === null) + 1;
+            if (currentSection <= 5) {
+                document.getElementById(`btn-next-${currentSection}`)?.removeAttribute('disabled');
+            }
+        }
+
+        function nextQuestion(current) {
+            document.getElementById(`section-${current}`).classList.remove('active');
+            document.getElementById(`section-${current + 1}`).classList.add('active');
+            updateProgress(current + 1);
+        }
+
+        function prevQuestion(current) {
+            document.getElementById(`section-${current}`).classList.remove('active');
+            document.getElementById(`section-${current - 1}`).classList.add('active');
+            updateProgress(current - 1);
+        }
+
+        function updateProgress(step) {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`dot-${i}`).classList.toggle('active', i === step);
+            }
+        }
+
+        function generateRecommendations() {
+            const key = `${formData.flavor}-${formData.intensity}-${formData.allergy}-${formData.alcohol}-${formData.budget}`;
+
+            // Se não encontrar chave exata, pega um padrão genérico
+            let cocktails = cocktailDatabase[key] || [
+                { name: 'Mojito', price: '€12', desc: 'A escolha clássica: refrescante e deliciosa' },
+                { name: 'Margarita', price: '€12', desc: 'O favorito internacional: doce e forte' },
+                { name: 'Negroni', price: '€12', desc: 'Para quem gosta de amargo: sofisticado' }
+            ];
+
+            const html = cocktails.map((c, i) => `
+                <div class="cocktail-card" onclick="selectCocktail('${c.name}', '${c.price}')">
+                    <div class="cocktail-header">
+                        <span class="cocktail-name">${i+1}. ${c.name}</span>
+                        <span class="cocktail-price">${c.price}</span>
+                    </div>
+                    <div class="cocktail-desc">${c.desc}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('cocktail-list').innerHTML = html;
+            document.getElementById('section-5').classList.remove('active');
+            document.getElementById('recommendations').classList.add('active');
+        }
+
+        function selectCocktail(name, price) {
+            formData.selectedCocktail = { name, price };
+
+            // Visual feedback
+            document.querySelectorAll('.cocktail-card').forEach(card => card.style.opacity = '0.5');
+            event.currentTarget.style.opacity = '1';
+
+            // Show order button
+            const orderBtn = document.createElement('button');
+            orderBtn.className = 'btn-order';
+            orderBtn.textContent = '📤 Confirmar Pedido';
+            orderBtn.onclick = submitOrder;
+
+            const existing = document.querySelector('.btn-order');
+            if (existing) existing.remove();
+            document.getElementById('recommendations').appendChild(orderBtn);
+        }
+
+        function submitOrder() {
+            const orderData = {
+                cocktail: formData.selectedCocktail.name,
+                price: formData.selectedCocktail.price,
+                preferences: {
+                    sabor: formData.flavor,
+                    intensidade: formData.intensity,
+                    alergia: formData.allergy,
+                    alcool: formData.alcohol,
+                    orcamento: formData.budget
+                },
+                timestamp: new Date().toLocaleTimeString('pt-PT')
+            };
+
+            // Log (para testes)
+            console.log('Pedido:', orderData);
+
+            // Enviar para webhook (Discord)
+            const webhookUrl = 'https://discord.com/api/webhooks/SEU_WEBHOOK_AQUI';
+
+            // Para teste: mostrar mensagem de sucesso
+            showSuccess(orderData);
+        }
+
+        function showSuccess(order) {
+            document.getElementById('recommendations').innerHTML = `
+                <div class="success">
+                    <h2>✅ Pedido Confirmado!</h2>
+                    <p>O teu <strong>${order.cocktail}</strong> (${order.price})</p>
+                    <p style="margin-bottom: 0; color: #00d4ff; font-size: 12px;">
+                        O bartender já está a preparar! 🍸
+                    </p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
